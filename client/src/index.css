@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-jobify text-white font-display min-h-screen flex flex-col overflow-x-hidden;
+    background-color: #141118;
+    color: #ffffff;
+    --primary: #8c2bee;
+    --background-light: #f7f6f8;
+    --background-dark: #141118;
+    --jobify-light: #302839;
+    --jobify-dark: #1c1723;
+  }
+}
+
+@layer utilities {
+  .text-primary {
+    color: var(--primary);
+  }
+
+  .bg-primary {
+    background-color: var(--primary);
+  }
+
+  .border-primary {
+    border-color: var(--primary);
+  }
+
+  .bg-jobify-light {
+    background-color: var(--jobify-light);
+  }
+
+  .border-jobify-light {
+    border-color: var(--jobify-light);
+  }
+
+  .bg-background-dark {
+    background-color: var(--background-dark);
+  }
+
+  /* Custom scrollbar for modern feel */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #121214;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #8c2bee;
+  }
+
+  .content-height {
+    height: calc(100vh - 140px);
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #333 #121214;
+    scroll-behavior: smooth;
+  }
+
+  .orb-glow-1 {
+    background: radial-gradient(circle, rgba(140, 43, 238, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+  }
+
+  .orb-glow-2 {
+    background: radial-gradient(circle, rgba(219, 39, 119, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: rgba(48, 40, 57, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-nav {
+    background: rgba(20, 17, 24, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(48, 40, 57, 1);
+  }
+
+  .glass {
+    background: rgba(48, 40, 57, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass:hover {
+    background: rgba(48, 40, 57, 0.6);
+    border: 1px solid rgba(140, 43, 238, 0.3);
+  }
+
+  .glass-card {
+    background: rgba(48, 40, 57, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-sidebar {
+    background: rgba(20, 17, 24, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(48, 40, 57, 1);
+  }
+
+  .progress-ring__circle {
+    transition: stroke-dashoffset 0.35s;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+
+  .nav-item.active {
+    background: rgba(140, 43, 238, 0.15);
+    border-right: 3px solid #8c2bee;
+    color: white;
+  }
+
+  .glass-input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .ambient-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+    opacity: 0.4;
+  }
+
+  .orb-1 {
+    top: -10%;
+    left: -10%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, #8c2bee 0%, transparent 70%);
+  }
+
+  .orb-2 {
+    bottom: -10%;
+    right: -10%;
+    width: 40vw;
+    height: 40vw;
+    background: radial-gradient(circle, #4c1d95 0%, transparent 70%);
+  }
+
+  .orb-3 {
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30vw;
+    height: 30vw;
+    background: radial-gradient(circle, #be185d 0%, transparent 70%);
+    opacity: 0.15;
+  }
+
+  /* Premium Nav Styles */
+  .glass-nav-premium {
+    background: rgba(10, 10, 12, 0.7);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .purple-glow {
+    box-shadow: 0 0 20px rgba(140, 43, 238, 0.3);
+  }
+
+  .nav-pill-active {
+    background: linear-gradient(90deg, #8c2bee 0%, #db2777 100%);
+    box-shadow: 0 4px 15px rgba(140, 43, 238, 0.4);
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
