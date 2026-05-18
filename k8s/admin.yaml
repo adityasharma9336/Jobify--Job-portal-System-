@@ -1,17 +1,17 @@
-# ─── Frontend Deployment ───────────────────────────────────────────────────────
+# ─── Admin Panel Deployment ────────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jobify-frontend
+  name: jobify-admin
   namespace: jobify
   labels:
     app.kubernetes.io/name: jobify
-    app.kubernetes.io/component: frontend
+    app.kubernetes.io/component: admin
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: jobify-frontend
+      app: jobify-admin
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -20,49 +20,49 @@ spec:
   template:
     metadata:
       labels:
-        app: jobify-frontend
+        app: jobify-admin
     spec:
       containers:
-        - name: frontend
-          image: adityasharma9336/jobify-frontend:latest
+        - name: admin
+          image: adityasharma9336/jobify-admin:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
               name: http
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 80
             initialDelaySeconds: 10
             periodSeconds: 30
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 80
             initialDelaySeconds: 5
             periodSeconds: 10
             failureThreshold: 3
           resources:
             requests:
-              memory: "64Mi"
-              cpu: "50m"
+              memory: "32Mi"
+              cpu: "25m"
             limits:
-              memory: "128Mi"
-              cpu: "200m"
+              memory: "64Mi"
+              cpu: "100m"
 ---
-# ─── Frontend Service ─────────────────────────────────────────────────────────
+# ─── Admin Service ─────────────────────────────────────────────────────────────
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend-service
+  name: admin-service
   namespace: jobify
   labels:
     app.kubernetes.io/name: jobify
-    app.kubernetes.io/component: frontend
+    app.kubernetes.io/component: admin
 spec:
   selector:
-    app: jobify-frontend
+    app: jobify-admin
   ports:
     - name: http
       protocol: TCP

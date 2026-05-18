@@ -1,37 +1,96 @@
+# ─── Backend Deployment ────────────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jobify-backend
+  namespace: jobify
+  labels:
+    app.kubernetes.io/name: jobify
+    app.kubernetes.io/component: backend
 spec:
   replicas: 2
   selector:
     matchLabels:
       app: jobify-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
         app: jobify-backend
     spec:
       containers:
-      - name: backend
-        image: your-dockerhub-username/jobify-backend:latest
-        ports:
-        - containerPort: 5000
-        env:
-        - name: MONGO_URI
-          value: "mongodb://mongo-service:27017/jobify"
-        - name: JWT_SECRET
-          value: "your_jwt_secret"
+        - name: backend
+          image: adityasharma9336/jobify-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              name: http
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: jobify-config
+                  key: NODE_ENV
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: jobify-config
+                  key: PORT
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: jobify-secrets
+                  key: MONGO_URI
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jobify-secrets
+                  key: JWT_SECRET
+          # Liveness Probe — restart container if /api/health fails
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 10
+          # Readiness Probe — don't route traffic until healthy
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
 ---
+# ─── Backend Service ───────────────────────────────────────────────────────────
 apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
+  namespace: jobify
+  labels:
+    app.kubernetes.io/name: jobify
+    app.kubernetes.io/component: backend
 spec:
   selector:
     app: jobify-backend
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 5000
       targetPort: 5000
   type: ClusterIP

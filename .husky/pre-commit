@@ -1,0 +1,18 @@
+#!/bin/sh
+# Jobify Pre-Commit Hook — runs ESLint before every commit
+# Powered by Husky + lint-staged
+
+echo "🔍 Running ESLint pre-commit check..."
+
+# Run lint-staged (only lints files staged for this commit)
+npx lint-staged
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ ESLint found errors. Commit blocked!"
+  echo "   Fix the errors above and try again."
+  echo "   To bypass (not recommended): git commit --no-verify"
+  exit 1
+fi
+
+echo "✅ ESLint passed! Proceeding with commit."
