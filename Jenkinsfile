@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'NodeJS'
+    }
+
     environment {
         // ─── Docker Hub ────────────────────────────────────────────────────────
         DOCKER_HUB_USER    = 'adityasharma9336'
