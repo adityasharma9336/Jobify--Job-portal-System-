@@ -1,5 +1,5 @@
 # ─── Stage 1: Build / Install Dependencies ───────────────────────────────────
-FROM node:20-alpine AS deps
+FROM node:26-alpine AS deps
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM node:20-alpine
+FROM node:26-alpine
 
 # Install wget for HEALTHCHECK
 RUN apk add --no-cache wget
