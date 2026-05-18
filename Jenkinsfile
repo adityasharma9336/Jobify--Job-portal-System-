@@ -26,7 +26,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                sh 'echo "✅ Code checked out — Branch: ${GIT_BRANCH}, Commit: ${GIT_COMMIT[0..7]}"'
+                sh 'echo "✅ Code checked out — Branch: ${GIT_BRANCH}, Commit: ${GIT_COMMIT}"'
             }
         }
 
