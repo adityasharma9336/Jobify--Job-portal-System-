@@ -179,12 +179,12 @@ pipeline {
             }
         }
 
-        // ✅ Simple deploy placeholder
         stage('Deploy') {
             steps {
-
                 sh '''
-                    echo "🚀 Deployment step skipped for now..."
+                    echo "🚀 Deploying containers..."
+                    docker compose down || true
+                    docker compose up -d
                 '''
             }
         }
