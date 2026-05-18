@@ -140,12 +140,10 @@ pipeline {
 
                 stage('Build Client Docker Image') {
                     steps {
-
                         dir("${FRONTEND_DIR}") {
-
                             sh '''
                                 echo "🐳 Building frontend Docker image..."
-                                docker build -t jobify-client .
+                                docker build -t jobify-frontend:latest .
                             '''
                         }
                     }
@@ -153,12 +151,10 @@ pipeline {
 
                 stage('Build Admin Docker Image') {
                     steps {
-
                         dir("${ADMIN_DIR}") {
-
                             sh '''
                                 echo "🐳 Building admin Docker image..."
-                                docker build -t jobify-admin .
+                                docker build -t jobify-admin:latest .
                             '''
                         }
                     }
@@ -166,12 +162,10 @@ pipeline {
 
                 stage('Build Backend Docker Image') {
                     steps {
-
                         dir("${BACKEND_DIR}") {
-
                             sh '''
                                 echo "🐳 Building backend Docker image..."
-                                docker build -t jobify-server .
+                                docker build -t jobify-backend:latest .
                             '''
                         }
                     }
