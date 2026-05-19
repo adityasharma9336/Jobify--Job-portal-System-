@@ -334,6 +334,24 @@ services:
     networks:
       - jobify-net
 
+  frontend:
+    image: adityasharma9336/jobify-frontend:latest
+    container_name: jobify-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - jobify-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
   prometheus:
     image: prom/prometheus:latest
     container_name: jobify-prometheus
@@ -383,11 +401,24 @@ COMPOSEEOF
     JWT_VAL=$(echo $SECRET | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('JWT_SECRET','jobify_secret'))" 2>/dev/null || echo "${var.jwt_secret}")
     sed -i "s|JOBIFY_JWT_SECRET_PLACEHOLDER|$JWT_VAL|g" /opt/jobify/docker-compose.yml
 
-    # Pull all images (no frontend — served from S3)
+    # Pull backend/admin/jenkins and build frontend locally
     echo "=== Pulling Docker images ==="
     docker pull adityasharma9336/jobify-backend:latest || true
     docker pull adityasharma9336/jobify-admin:latest || true
     docker pull jenkins/jenkins:lts || true
+    
+    echo "=== Adding Swap Space to prevent OOM ==="
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+
+    echo "=== Building Frontend Image Locally on EC2 ==="
+    git clone https://github.com/adityasharma9336/Jobify--Job-portal-System-.git /tmp/jobify-repo
+    cd /tmp/jobify-repo/client
+    docker build -t adityasharma9336/jobify-frontend:latest .
+    rm -rf /tmp/jobify-repo
+    cd /opt/jobify
 
     # Install AWS CLI v2 for Jenkins S3 deployments
     apt-get install -y unzip
@@ -429,13 +460,12 @@ SVCEOF
     echo "=== Jobify setup complete ==="
     EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
     echo "Services:"
+    echo "  Frontend:      http://$EC2_IP"
     echo "  Jenkins CI/CD: http://$EC2_IP:8080"
     echo "  Admin Panel:   http://$EC2_IP:3002"
     echo "  Backend API:   http://$EC2_IP:5001/api/health"
     echo "  Prometheus:    http://$EC2_IP:9090"
     echo "  Grafana:       http://$EC2_IP:3001"
-    echo "  Frontend CDN:  https://don74iy6n0j9s.cloudfront.net"
-    echo "  Frontend S3:   http://${var.app_name}-frontend-${var.environment}-${data.aws_caller_identity.current.account_id}.s3-website.${var.aws_region}.amazonaws.com"
     date
 
     # Print Jenkins initial admin password location
@@ -447,92 +477,8 @@ SVCEOF
   tags = { Name = "${var.app_name}-backend-ec2" }
 }
 
-# ─── S3 Bucket — Frontend ─────────────────────────────────────────────────────
-resource "aws_s3_bucket" "frontend" {
-  bucket = "${var.app_name}-frontend-${var.environment}-${data.aws_caller_identity.current.account_id}"
-  force_destroy = true
-}
-
-resource "aws_s3_bucket_public_access_block" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-resource "aws_s3_bucket_website_configuration" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
-  index_document { suffix = "index.html" }
-  error_document { key = "index.html" } # SPA fallback
-}
-
-resource "aws_s3_bucket_policy" "frontend_public_read" {
-  bucket = aws_s3_bucket.frontend.id
-  depends_on = [aws_s3_bucket_public_access_block.frontend]
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid       = "PublicReadGetObject"
-      Effect    = "Allow"
-      Principal = "*"
-      Action    = "s3:GetObject"
-      Resource  = "${aws_s3_bucket.frontend.arn}/*"
-    }]
-  })
-}
-
-# ─── CloudFront Distribution ──────────────────────────────────────────────────
-resource "aws_cloudfront_distribution" "frontend_cdn" {
-  enabled             = true
-  is_ipv6_enabled     = true
-  default_root_object = "index.html"
-  comment             = "Jobify Frontend CDN"
-
-  origin {
-    domain_name = aws_s3_bucket_website_configuration.frontend.website_endpoint
-    origin_id   = "S3-${var.app_name}-frontend"
-
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-  }
-
-  default_cache_behavior {
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "S3-${var.app_name}-frontend"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized (AWS Managed)
-  }
-
-  # SPA routing — serve index.html for 404s
-  custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  restrictions {
-    geo_restriction { restriction_type = "none" }
-  }
-
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-
-  tags = { Name = "${var.app_name}-cloudfront" }
+# ─── Elastic IP Association ───────────────────────────────────────────────────
+resource "aws_eip_association" "eip_assoc" {
+  instance_id   = aws_instance.jobify_backend.id
+  allocation_id = "eipalloc-03788a512da95a30e"
 }
