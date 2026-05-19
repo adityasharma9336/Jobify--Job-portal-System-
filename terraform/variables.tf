@@ -19,7 +19,7 @@ variable "environment" {
 variable "ec2_instance_type" {
   description = "EC2 instance type for the backend server"
   type        = string
-  default     = "t3.small"
+  default     = "m7i.large"
 }
 
 variable "ami_id" {
