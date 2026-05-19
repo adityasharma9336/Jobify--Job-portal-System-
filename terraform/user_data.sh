@@ -82,7 +82,7 @@ services:
       start_period: 30s
 
   backend:
-    image: adityasharma9336/jobify-backend:latest
+    image: 423945942014.dkr.ecr.ap-south-1.amazonaws.com/jobify-backend:latest
     container_name: jobify-backend
     restart: unless-stopped
     ports:
@@ -121,7 +121,7 @@ services:
       - jobify-net
 
   admin:
-    image: adityasharma9336/jobify-admin:latest
+    image: 423945942014.dkr.ecr.ap-south-1.amazonaws.com/jobify-admin:latest
     container_name: jobify-admin
     restart: unless-stopped
     ports:
@@ -133,7 +133,7 @@ services:
       - jobify-net
 
   frontend:
-    image: adityasharma9336/jobify-frontend:latest
+    image: 423945942014.dkr.ecr.ap-south-1.amazonaws.com/jobify-frontend:latest
     container_name: jobify-frontend
     restart: unless-stopped
     ports:
@@ -193,22 +193,17 @@ COMPOSEEOF
 JWT_VAL="${jwt_secret}"
 sed -i "s|JOBIFY_JWT_SECRET_PLACEHOLDER|$JWT_VAL|g" /opt/jobify/docker-compose.yml
 
-# Pull backend/admin/jenkins images
-echo "=== Pulling Docker images ==="
-docker pull adityasharma9336/jobify-backend:latest || true
-docker pull adityasharma9336/jobify-admin:latest || true
+# Authenticate with AWS ECR
+echo "=== Authenticating with AWS ECR ==="
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 423945942014.dkr.ecr.ap-south-1.amazonaws.com || true
+
+# Pull jenkins image
+echo "=== Pulling Jenkins image ==="
 docker pull jenkins/jenkins:lts || true
 
-# Build frontend image from GitHub source (no Docker Hub login needed)
-echo "=== Building Frontend Image from GitHub ==="
-git clone https://github.com/adityasharma9336/Jobify--Job-portal-System-.git /tmp/jobify-repo
-docker build -t adityasharma9336/jobify-frontend:latest /tmp/jobify-repo/client
-rm -rf /tmp/jobify-repo
-echo "Frontend image built successfully!"
-
-# Start the full stack
+# Start the full stack (backend/frontend/admin will fail until Jenkins builds them)
 echo "=== Starting Jobify stack ==="
-docker compose -f /opt/jobify/docker-compose.yml up -d
+docker compose -f /opt/jobify/docker-compose.yml up -d || true
 
 # Create systemd service for auto-restart on reboot
 cat > /etc/systemd/system/jobify.service << 'SVCEOF'

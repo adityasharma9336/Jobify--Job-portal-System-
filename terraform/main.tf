@@ -60,6 +60,36 @@ resource "aws_iam_instance_profile" "jobify_profile" {
   role = aws_iam_role.jobify_ec2_role.name
 }
 
+# ─── IAM Role Policy for ECR Access ──────────────────────────────────────────
+resource "aws_iam_role_policy" "jobify_ecr_policy" {
+  name = "${var.app_name}-ecr-policy"
+  role = aws_iam_role.jobify_ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "ecr:GetAuthorizationToken"
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # ─── AWS Secrets Manager — JWT Secret ────────────────────────────────────────
 resource "aws_secretsmanager_secret" "jobify_jwt" {
   name                    = "${var.app_name}/jwt-secret"
@@ -212,6 +242,11 @@ resource "aws_instance" "jobify_backend" {
     app_name   = var.app_name
   })
 
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
+
   tags = { Name = "${var.app_name}-backend-ec2" }
 }
 
@@ -221,3 +256,21 @@ resource "aws_eip_association" "eip_assoc" {
   allocation_id = "eipalloc-03788a512da95a30e"
 }
 
+# ─── ECR Repositories ─────────────────────────────────────────────────────────
+resource "aws_ecr_repository" "frontend" {
+  name                 = "${var.app_name}-frontend"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}
+
+resource "aws_ecr_repository" "backend" {
+  name                 = "${var.app_name}-backend"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}
+
+resource "aws_ecr_repository" "admin" {
+  name                 = "${var.app_name}-admin"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}
